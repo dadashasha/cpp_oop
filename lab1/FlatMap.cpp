@@ -8,6 +8,7 @@ std::size_t FlatMap::binarySearch(const std::string& key) {
     return lower_bound - array;
 }
 
+//Расширение массива
 void FlatMap::extension(std::size_t newСapacity) {
     if (newСapacity <= capacity) {
         return ;

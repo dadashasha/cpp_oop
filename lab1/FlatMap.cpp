@@ -60,3 +60,14 @@ FlatMap::FlatMap(const FlatMap& other_map) : array(nullptr), size(0), capacity(0
     std::swap(capacity, temp.capacity);
 }
 
+//Удаление элемента по ключу, возвращает количество удаленных элементов (0 или 1)
+std::size_t FlatMap::erase(const std::string& key) {}
+
+//Возвращает true, если запись с таким ключом присутствует в таблице
+bool FlatMap::contains(const std::string& key) {}
+
+//Доступ / вставка элемента по ключу
+std::string& FlatMap::operator[](const std::string& key) {}
+
+//Оператор присваивания
+FlatMap& FlatMap::operator=(const FlatMap& other_map) {}

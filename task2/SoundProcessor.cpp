@@ -39,7 +39,7 @@ struct WAVHeader {
 };
 
 //Заглушение аудио в указанных временных рамках
-void muteAudio(const char* inputFileName, const char* outputFileName, int startSec, int endSec) {
+void mute(const char* inputFileName, const char* outputFileName, int startSec, int endSec) {//вместо char* - std::string
     std::ifstream input(inputFileName, std::ios::binary);
     std::ofstream output(outputFileName, std::ios::binary);
     WAVHeader header = {};
@@ -63,13 +63,13 @@ void muteAudio(const char* inputFileName, const char* outputFileName, int startS
         //Запись сэмпла в выходной файл
         output.write(reinterpret_cast<char*>(&sample), sizeof(sample);
     }
-
+    //необязательно
     input.close();
     output.close();
 }
 
 //Смиксование двух файлов
-void mixAudio(const char* inputFileName1, const char* inputFileName2, const char* outputFileName) {
+void mix(const char* inputFileName1, const char* inputFileName2, const char* outputFileName) {
     std::ifstream input1(inputFileName1, std::ios::binary);
     std::ifstream input2(inputFileName2, std::ios::binary);
     std::ofstream output(outputFileName, std::ios::binary);
@@ -84,8 +84,13 @@ void mixAudio(const char* inputFileName1, const char* inputFileName2, const char
     int16_t mixSample = 0;
 }
 
-int main(int argc, char argv[]) {
+int main(int argc, char* argv[]) {
+    if (argc < 3) {
+        cout << "bad input" << endl;
+        return 1;
+    }
 
+    mute(argv[3], argv[2], 0, 30);
 
     return 0;
 }

@@ -2,10 +2,11 @@
 #include <fstream>
 #include <vector>
 
-// Структура для хранения заголовка WAV-файла
 struct WAVHeader {
-    char chunkID[4];//идентификатор формата файла
+    char chunkID[4];//идентификатор формата файла RIFF
     uint32_t chunkSize;//размер данных аудиофайла, без первых 8 байтов заголовка
+
+    char format[4];//формат WAVE
 
     //идентификатор первой подчасти заголовка,
     // "fmt", что указывает на начало части заголовка,
@@ -38,11 +39,9 @@ struct WAVHeader {
 };
 
 //Заглушение аудио в указанных временных рамках
-
-//Входны параметры: имя выходного и выходного файла, начальное и конечное время для заглушения
 void muteAudio(const char* inputFileName, const char* outputFileName, int startSec, int endSec) {
-    std::ifstream input(inputFileName, std::ios::binary);//Открываем входной файл для чтения в бинарном режиме
-    std::ofstream output(outputFileName, std::ios::binary);//Создаем выходной файл для записи в бинарном режиме
+    std::ifstream input(inputFileName, std::ios::binary);
+    std::ofstream output(outputFileName, std::ios::binary);
     WAVHeader header = {};
 
     //Чтение заголовка из входного файла и запись его в выходной файл
@@ -65,8 +64,28 @@ void muteAudio(const char* inputFileName, const char* outputFileName, int startS
         output.write(reinterpret_cast<char*>(&sample), sizeof(sample);
     }
 
-    //Закрытие файлов
     input.close();
     output.close();
 }
 
+//Смиксование двух файлов
+void mixAudio(const char* inputFileName1, const char* inputFileName2, const char* outputFileName) {
+    std::ifstream input1(inputFileName1, std::ios::binary);
+    std::ifstream input2(inputFileName2, std::ios::binary);
+    std::ofstream output(outputFileName, std::ios::binary);
+    WAVHeader header = {};
+    
+    //Чтение заголовка из входного файла и запись его в выходной файл
+    input.read(reinterpret_cast<char*>(&header), sizeof(header));
+    output.write(reinterpret_cast<char*>(&header), sizeof(header));
+
+    int16_t sample1 = 0;
+    int16_t sample2 = 0;
+    int16_t mixSample = 0;
+}
+
+int main(int argc, char argv[]) {
+
+
+    return 0;
+}

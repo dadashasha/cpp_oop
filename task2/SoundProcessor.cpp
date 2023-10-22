@@ -112,7 +112,37 @@ int main(int argc, char* argv[]) {
         return 1;
     }
 
-    mute(argv[3], argv[2], 0, 30);
+    const char* configFileName = argv[1];
+
+    // Открываем файл с конфигурацией и выполняем действия в соответствии с ним
+    std::ifstream configFile(configFileName);
+    std::string line;
+    while (std::getline(configFile, line)) {
+        std::vector<std::string> parts;
+        std::string part;
+        std::istringstream lineStream(line);
+        while (std::getline(lineStream, part, ' ')) {
+            parts.push_back(part);
+        }
+
+        if (parts.size() < 3) {
+            continue;  // Пропускаем некорректные строки в конфигурации
+        }
+
+        const std::string& action = parts[0];
+        const std::string& inputFileName = parts[1];
+
+        if (action == "mute") {
+            int startSec = std::stoi(parts[2]);
+            int endSec = std::stoi(parts[3]);
+            muteAudio(inputFileName.c_str(), "output.wav", startSec, endSec);
+        }
+        else if (action == "mix") {
+            int startSec = std::stoi(parts[2]);
+            const std::string& inputFileName2 = parts[3];
+            mixAudio(inputFileName.c_str(), inputFileName2.c_str(), "output.wav", startSec);
+        }
+    }
 
     return 0;
 }

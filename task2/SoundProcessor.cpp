@@ -39,7 +39,7 @@ struct WAVHeader {
 };
 
 //Заглушение аудио в указанных временных рамках
-void mute(const char* inputFileName, const char* outputFileName, int startSec, int endSec) {//вместо char* - std::string
+void mute(const std::string& inputFileName, const std::string& outputFileName, int startSec, int endSec) {//вместо char* - std::string
     std::ifstream input(inputFileName, std::ios::binary);
     std::ofstream output(outputFileName, std::ios::binary);
     WAVHeader header = {};
@@ -69,7 +69,7 @@ void mute(const char* inputFileName, const char* outputFileName, int startSec, i
 }
 
 //Смиксование двух файлов
-void mix(const char* inputFileName1, const char* inputFileName2, const char* outputFileName) {
+void mix(const std::string& inputFileName1, const std::string& inputFileName2, const std::string& outputFileName, int startSec) {
     std::ifstream input1(inputFileName1, std::ios::binary);
     std::ifstream input2(inputFileName2, std::ios::binary);
     std::ofstream output(outputFileName, std::ios::binary);
@@ -82,6 +82,28 @@ void mix(const char* inputFileName1, const char* inputFileName2, const char* out
     int16_t sample1 = 0;
     int16_t sample2 = 0;
     int16_t mixSample = 0;
+    
+    //количество сэмплов в одной секунде
+    int32_t sampleCount = header.sampleRate * (header.bitsPerSample / 8) * (header.numChannels);
+
+    //количество сэмплов, которые нужно пропустить в начале первого файла
+    int32_t samplesToSkip = startSec * sampleCount;
+
+    //пропуск первых секунд в первом файле
+    input1.seekg(samplesToSkip, std::ios::beg);
+
+    for (int i = 0; i < sampleCount; ++i) {
+        input1.read(reinterpret_cast<char*>(&sample1), sizeof(sample1));
+        input2.read(reinterpret_cast<char*>(&sample2), sizeof(sample2));
+
+        //смешивание сэмплов
+        mixedSample = (sample1 + sample2) / 2;
+        output.write(reinterpret_cast<char*>(&mixedSample), sizeof(mixedSample));
+    }
+
+    input1.close();
+    input2.close();
+    output.close();
 }
 
 int main(int argc, char* argv[]) {

@@ -1,6 +1,7 @@
 #include <iostream>
 #include <fstream>
 #include <vector>
+#include <sstream>
 
 struct WAVHeader {
     char chunkID[4];//идентификатор формата файла RIFF
@@ -38,13 +39,13 @@ struct WAVHeader {
     uint16_t bitsPerSample;
 };
 
-//Заглушение аудио в указанных временных рамках
+//заглушение аудио в указанных временных рамках
 void mute(const std::string& inputFileName, const std::string& outputFileName, int startSec, int endSec) {//вместо char* - std::string
     std::ifstream input(inputFileName, std::ios::binary);
     std::ofstream output(outputFileName, std::ios::binary);
     WAVHeader header = {};
 
-    //Чтение заголовка из входного файла и запись его в выходной файл
+    //чтение заголовка из входного файла и запись его в выходной файл
     input.read(reinterpret_cast<char*>(&header), sizeof(header));
     output.write(reinterpret_cast<char*>(&header), sizeof(header));
 
@@ -52,37 +53,37 @@ void mute(const std::string& inputFileName, const std::string& outputFileName, i
     int32_t sampleCount = (header.sampleRate * (endSec - startSec));
 
     for (int i = 0; i < sampleCount; ++i) {
-        //Чтение сэмпла из входного файла
+        //чтение сэмпла из входного файла
         input.read(reinterpret_cast<char*>(&sample), sizeof(sample));
 
-        //Проверка, находится ли текущий сэмпл в указанных временных интервалах
+        //проверка, находится ли текущий сэмпл в указанных временных интервалах
         if (i >= (startSec * header.sampleRate) && i < (endSec * header.sampleRate)) {
             sample = 0;//Заглушаем аудио, устанавливая сэмпл в 0
         }
 
-        //Запись сэмпла в выходной файл
-        output.write(reinterpret_cast<char*>(&sample), sizeof(sample);
+        //запись сэмпла в выходной файл
+        output.write(reinterpret_cast<char*>(&sample), sizeof(sample));
     }
     //необязательно
     input.close();
     output.close();
 }
 
-//Смиксование двух файлов
+//смиксование двух файлов
 void mix(const std::string& inputFileName1, const std::string& inputFileName2, const std::string& outputFileName, int startSec) {
     std::ifstream input1(inputFileName1, std::ios::binary);
     std::ifstream input2(inputFileName2, std::ios::binary);
     std::ofstream output(outputFileName, std::ios::binary);
     WAVHeader header = {};
-    
-    //Чтение заголовка из входного файла и запись его в выходной файл
-    input.read(reinterpret_cast<char*>(&header), sizeof(header));
+
+    //чтение заголовка из входного файла и запись его в выходной файл
+    input2.read(reinterpret_cast<char*>(&header), sizeof(header));
     output.write(reinterpret_cast<char*>(&header), sizeof(header));
 
     int16_t sample1 = 0;
     int16_t sample2 = 0;
     int16_t mixSample = 0;
-    
+
     //количество сэмплов в одной секунде
     int32_t sampleCount = header.sampleRate * (header.bitsPerSample / 8) * (header.numChannels);
 
@@ -97,8 +98,8 @@ void mix(const std::string& inputFileName1, const std::string& inputFileName2, c
         input2.read(reinterpret_cast<char*>(&sample2), sizeof(sample2));
 
         //смешивание сэмплов
-        mixedSample = (sample1 + sample2) / 2;
-        output.write(reinterpret_cast<char*>(&mixedSample), sizeof(mixedSample));
+        mixSample = (sample1 + sample2) / 2;
+        output.write(reinterpret_cast<char*>(&mixSample), sizeof(mixSample));
     }
 
     input1.close();
@@ -108,14 +109,17 @@ void mix(const std::string& inputFileName1, const std::string& inputFileName2, c
 
 int main(int argc, char* argv[]) {
     if (argc < 3) {
-        cout << "bad input" << endl;
+        std::cout << "bad input" << std::endl;
         return 1;
     }
 
-    const char* configFileName = argv[1];
+    const std::string& configFileName = argv[1];
+    const std::string& outputFileName = argv[2];
 
-    // Открываем файл с конфигурацией и выполняем действия в соответствии с ним
+    //открываем файл с конфигурацией и выполняем действия в соответствии с ним
     std::ifstream configFile(configFileName);
+    std::ofstream outputFile(outputFileName, std::ios::binary);//создание
+
     std::string line;
     while (std::getline(configFile, line)) {
         std::vector<std::string> parts;
@@ -126,7 +130,7 @@ int main(int argc, char* argv[]) {
         }
 
         if (parts.size() < 3) {
-            continue;  // Пропускаем некорректные строки в конфигурации
+            continue;//пропускаем некорректные строки в конфигурации
         }
 
         const std::string& action = parts[0];
@@ -135,14 +139,17 @@ int main(int argc, char* argv[]) {
         if (action == "mute") {
             int startSec = std::stoi(parts[2]);
             int endSec = std::stoi(parts[3]);
-            muteAudio(inputFileName.c_str(), "output.wav", startSec, endSec);
+            mute(inputFileName.c_str(), outputFileName, startSec, endSec);
         }
         else if (action == "mix") {
             int startSec = std::stoi(parts[2]);
             const std::string& inputFileName2 = parts[3];
-            mixAudio(inputFileName.c_str(), inputFileName2.c_str(), "output.wav", startSec);
+            mix(inputFileName.c_str(), inputFileName2.c_str(), outputFileName, startSec);
         }
     }
+
+    configFile.close();
+    outputFile.close();
 
     return 0;
 }

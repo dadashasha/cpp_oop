@@ -1,0 +1,2 @@
+mute output1.wav input1.wav 2 4
+mix output2.wav input1.wav input2.wav 5

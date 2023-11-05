@@ -63,8 +63,6 @@ void mute(const std::string& inputFileName, const std::string& outputFileName, i
     std::cout << "Mute operation completed." << std::endl;
 }
 
-
-
 void mix(const std::string& inputFileName1, const std::string& inputFileName2, const std::string& outputFileName, int startSec) {
     std::ifstream input1(inputFileName1, std::ios::binary);
     std::ifstream input2(inputFileName2, std::ios::binary);
@@ -83,32 +81,40 @@ void mix(const std::string& inputFileName1, const std::string& inputFileName2, c
         return;
     }
 
-    WAVHeader header = {};
+    WAVHeader header1 = {};
+    WAVHeader header2 = {};
 
-    input2.read(reinterpret_cast<char*>(&header), sizeof(header));
-    output.write(reinterpret_cast<char*>(&header), sizeof(header));
+    input1.read(reinterpret_cast<char*>(&header1), sizeof(header1));
+    input2.read(reinterpret_cast<char*>(&header2), sizeof(header2));
+
+    if (header1.sampleRate != header2.sampleRate || header1.numChannels != header2.numChannels || header1.bitsPerSample != header2.bitsPerSample) {
+        std::cerr << "Error: Audio parameters do not match." << std::endl;
+        return;
+    }
+
+    output.write(reinterpret_cast<char*>(&header1), sizeof(header1));
 
     int16_t sample1 = 0;
     int16_t sample2 = 0;
     int16_t mixSample = 0;
 
-    int32_t sampleCount = header.sampleRate * (header.bitsPerSample / 8) * (header.numChannels);
+    int32_t sampleSize = header1.numChannels * (header1.bitsPerSample / 8);
+    int32_t samplesToSkip = startSec * header1.sampleRate * sampleSize;
 
-    int32_t samplesToSkip = startSec * sampleCount;
+    // Пропустить начальные семплы
+    input1.seekg(samplesToSkip, std::ios::cur);
+    input2.seekg(samplesToSkip, std::ios::cur);
 
-    input1.seekg(samplesToSkip, std::ios::beg);
-
-    for (int i = 0; i < sampleCount; ++i) {
-        input1.read(reinterpret_cast<char*>(&sample1), sizeof(sample1));
-        input2.read(reinterpret_cast<char*>(&sample2), sizeof(sample2));
-
+    while (input1.read(reinterpret_cast<char*>(&sample1), sizeof(sample1)) &&
+        input2.read(reinterpret_cast<char*>(&sample2), sizeof(sample2))) {
         mixSample = (sample1 + sample2) / 2;
         output.write(reinterpret_cast<char*>(&mixSample), sizeof(mixSample));
     }
+
     std::cout << "Mix operation completed." << std::endl;
 }
 
-int main(int argc, char* argv[]) {
+int main(int argc, char* argv[]) {  
     if (argc < 3) {
         std::cout << "bad input" << std::endl;
         return 1; 

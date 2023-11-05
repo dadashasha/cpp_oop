@@ -1,7 +1,7 @@
 #include <iostream>
 #include <fstream>
-#include <vector>
 #include <sstream>
+#include <vector>
 
 struct WAVHeader {
     char chunkID[4];
@@ -17,32 +17,72 @@ struct WAVHeader {
     uint16_t bitsPerSample;
 };
 
-void mute(const std::string& inputFileName, const std::string& outputFileName, int startSec, int endSec) {//вместо char* - std::string
+void mute(const std::string& inputFileName, const std::string& outputFileName, int startSec, int endSec) {
     std::ifstream input(inputFileName, std::ios::binary);
     std::ofstream output(outputFileName, std::ios::binary);
+
+    if (!input.is_open()) {
+        std::cerr << "Error: Unable to open input file." << std::endl;
+        return;
+    }
+    if (!output.is_open()) {
+        std::cerr << "Error: Unable to open output file." << std::endl;
+        return;
+    }
+
     WAVHeader header = {};
 
     input.read(reinterpret_cast<char*>(&header), sizeof(header));
     output.write(reinterpret_cast<char*>(&header), sizeof(header));
 
     int16_t sample = 0;
-    int32_t sampleCount = (header.sampleRate * (endSec - startSec));
 
-    for (int i = 0; i < sampleCount; ++i) {
-        input.read(reinterpret_cast<char*>(&sample), sizeof(sample));
+    // Вычислите общее количество семплов между startSec и endSec
+    int32_t sampleRate = header.sampleRate;
+    int32_t bytesPerSample = header.bitsPerSample / 8;
+    int32_t samplesToSkip = startSec * sampleRate;
+    int32_t samplesToMute = (endSec - startSec) * sampleRate;
 
-        if (i >= (startSec * header.sampleRate) && i < (endSec * header.sampleRate)) {
-            sample = 0;
-        }
-
-        output.write(reinterpret_cast<char*>(&sample), sizeof(sample));
+    // Пропустить семплы до startSec
+    for (int32_t i = 0; i < samplesToSkip; ++i) {
+        input.read(reinterpret_cast<char*>(&sample), bytesPerSample);
+        output.write(reinterpret_cast<char*>(&sample), bytesPerSample);
     }
+
+    // Заглушить семплы в интервале [startSec, endSec)
+    for (int32_t i = 0; i < samplesToMute; ++i) {
+        sample = 0;
+        output.write(reinterpret_cast<char*>(&sample), bytesPerSample);
+    }
+
+    // Скопировать оставшиеся семплы
+    while (input.read(reinterpret_cast<char*>(&sample), bytesPerSample)) {
+        output.write(reinterpret_cast<char*>(&sample), bytesPerSample);
+    }
+
+    std::cout << "Mute operation completed." << std::endl;
 }
+
+
 
 void mix(const std::string& inputFileName1, const std::string& inputFileName2, const std::string& outputFileName, int startSec) {
     std::ifstream input1(inputFileName1, std::ios::binary);
     std::ifstream input2(inputFileName2, std::ios::binary);
     std::ofstream output(outputFileName, std::ios::binary);
+
+    if (!input1.is_open()) {
+        std::cerr << "Error: Unable to open input file 1." << std::endl;
+        return;
+    }
+    if (!input2.is_open()) {
+        std::cerr << "Error: Unable to open input file 2." << std::endl;
+        return;
+    }
+    if (!output.is_open()) {
+        std::cerr << "Error: Unable to open output file." << std::endl;
+        return;
+    }
+
     WAVHeader header = {};
 
     input2.read(reinterpret_cast<char*>(&header), sizeof(header));
@@ -65,12 +105,13 @@ void mix(const std::string& inputFileName1, const std::string& inputFileName2, c
         mixSample = (sample1 + sample2) / 2;
         output.write(reinterpret_cast<char*>(&mixSample), sizeof(mixSample));
     }
+    std::cout << "Mix operation completed." << std::endl;
 }
 
 int main(int argc, char* argv[]) {
     if (argc < 3) {
         std::cout << "bad input" << std::endl;
-        return 1;
+        return 1; 
     }
 
     const std::string& configFileName = argv[1];
@@ -78,6 +119,15 @@ int main(int argc, char* argv[]) {
 
     std::ifstream configFile(configFileName);
     std::ofstream outputFile(outputFileName, std::ios::binary);
+
+    if (!configFile.is_open()) {
+        std::cerr << "Error: Unable to open config file." << std::endl;
+        return 1;
+    }
+    if (!outputFile.is_open()) {
+        std::cerr << "Error: Unable to open output file." << std::endl;
+        return 1;
+    }
 
     std::string line;
     while (std::getline(configFile, line)) {
@@ -89,6 +139,7 @@ int main(int argc, char* argv[]) {
         }
 
         if (parts.size() < 3) {
+            std::cerr << "Error: Invalid line in config file." << std::endl;
             continue;
         }
 
@@ -96,13 +147,21 @@ int main(int argc, char* argv[]) {
         const std::string& inputFileName = parts[1];
 
         if (action == "mute") {
+            if (parts.size() < 4) {
+                std::cerr << "Error: Insufficient arguments for mute operation." << std::endl;
+                continue;
+            }
             int startSec = std::stoi(parts[2]);
             int endSec = std::stoi(parts[3]);
             mute(inputFileName.c_str(), outputFileName, startSec, endSec);
         }
         else if (action == "mix") {
-            int startSec = std::stoi(parts[2]);
-            const std::string& inputFileName2 = parts[3];
+            if (parts.size() < 4) {
+                std::cerr << "Error: Insufficient arguments for mix operation." << std::endl;
+                continue;
+            }
+            const std::string& inputFileName2 = parts[2];
+            int startSec = std::stoi(parts[3]);
             mix(inputFileName.c_str(), inputFileName2.c_str(), outputFileName, startSec);
         }
     }

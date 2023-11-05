@@ -52,19 +52,11 @@ SoundProcessor::mute(Operation& operation) {
 }
 
 
-<<<<<<< HEAD
 void SoundProcessor::mix(Operation& operation) {
 
     std::ifstream input1(operation.inputFileName.c_str(), std::ios::binary);
     std::ifstream input2(operation.inputFileName2.c_str(), std::ios::binary);
     std::ofstream output(operation.outputFileName, std::ios::binary);
-=======
-
-void mix(const std::string& inputFileName1, const std::string& inputFileName2, const std::string& outputFileName, int startSec) {
-    std::ifstream input1(inputFileName1, std::ios::binary);
-    std::ifstream input2(inputFileName2, std::ios::binary);
-    std::ofstream output(outputFileName, std::ios::binary);
->>>>>>> parent of c4d3851 (Update SoundProcessor.cpp)
 
     if (!input1.is_open()) {
         std::cerr << "Error: Unable to open input file 1." << std::endl;
@@ -79,23 +71,18 @@ void mix(const std::string& inputFileName1, const std::string& inputFileName2, c
         return;
     }
 
-    WAVHeader header = {};
+    WAVHeader header1 = {};
+    WAVHeader header2 = {};
 
-<<<<<<< HEAD
     input1.read(reinterpret_cast<char *>(&header1), sizeof(header1));
     input2.read(reinterpret_cast<char *>(&header2), sizeof(header2));
     output.write(reinterpret_cast<char *>(&header1), sizeof(header1));
-=======
-    input2.read(reinterpret_cast<char*>(&header), sizeof(header));
-    output.write(reinterpret_cast<char*>(&header), sizeof(header));
->>>>>>> parent of c4d3851 (Update SoundProcessor.cpp)
 
     int32_t bytesPerSample = header1.bitsPerSample / 8;
     int16_t sample1 = 0;
     int16_t sample2 = 0;
     int16_t mixSample = 0;
 
-<<<<<<< HEAD
     int32_t sampleSize = header1.numChannels * (header1.bitsPerSample / 8);
     int32_t samplesToSkip = operation.startSec * header1.sampleRate * sampleSize;
 
@@ -109,31 +96,11 @@ void mix(const std::string& inputFileName1, const std::string& inputFileName2, c
     // делаем микс
     while (input1.read(reinterpret_cast<char *>(&sample1), bytesPerSample) &&
            input2.read(reinterpret_cast<char *>(&sample2), bytesPerSample)) {
-=======
-    int32_t sampleCount = header.sampleRate * (header.bitsPerSample / 8) * (header.numChannels);
-
-    int32_t samplesToSkip = startSec * sampleCount;
-
-    input1.seekg(samplesToSkip, std::ios::beg);
-
-    for (int i = 0; i < sampleCount; ++i) {
-        input1.read(reinterpret_cast<char*>(&sample1), sizeof(sample1));
-        input2.read(reinterpret_cast<char*>(&sample2), sizeof(sample2));
-
->>>>>>> parent of c4d3851 (Update SoundProcessor.cpp)
         mixSample = (sample1 + sample2) / 2;
         output.write(reinterpret_cast<char *>(&mixSample), bytesPerSample);
     }
+
     std::cout << "Mix operation completed." << std::endl;
 
 }
-
-<<<<<<< HEAD
-=======
-int main(int argc, char* argv[]) {
-    if (argc < 3) {
-        std::cout << "bad input" << std::endl;
-        return 1; 
-    }
->>>>>>> parent of c4d3851 (Update SoundProcessor.cpp)
 

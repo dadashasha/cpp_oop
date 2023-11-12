@@ -1,7 +1,6 @@
 #ifndef DASHA_SOUNDPROCESSOR_H
 #define DASHA_SOUNDPROCESSOR_H
 
-
 #include <string>
 #include <iostream>
 #include <fstream>

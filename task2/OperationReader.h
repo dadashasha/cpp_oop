@@ -13,13 +13,9 @@ struct Operation {
     int endSec;
 };
 
-
 class OperationReader {
-
-
 public:
     std::vector<Operation> createOperationList(std::ifstream& configFile);
 };
-
 
 #endif //DASHA_OPERATIONREADER_H

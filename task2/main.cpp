@@ -1,18 +1,16 @@
-#include <iostream>
-#include <vector>
 #include "SoundProcessor.h"
 #include "OperationReader.h"
 
-int main(int argc, char *argv[]) {
-    if (argc < 2) {
+int main(int argc, char* argv[]) {
+    if (argc < 2) {//проверка на то, подан ли файл конфигурации(хотя бы он)
         std::cout << "bad input" << std::endl;
         return 1;
     }
 
-    const std::string &configFileName = argv[1];
+    const std::string& configFileName = argv[1];
     std::ifstream configFile(configFileName);
 
-    if (!configFile.is_open()) {
+    if (!configFile.is_open()) {//проверка на открытие файла конфигурации
         std::cerr << "Error: Unable to open config file." << std::endl;
         return 1;
     }
@@ -20,7 +18,7 @@ int main(int argc, char *argv[]) {
     OperationReader operationReader;
     std::vector<Operation> operations = operationReader.createOperationList(configFile);
 
-    // вывод списка операций для отладки (можно удалить)
+    //вывод списка операций для отладки(можно удалить)
     for (const Operation& operation : operations) {
         std::cout << "Action: " << operation.action << std::endl;
         std::cout << "outputFileName: " << operation.outputFileName << std::endl;
@@ -35,7 +33,8 @@ int main(int argc, char *argv[]) {
     for (Operation exampleOperation : operations) {
         if (exampleOperation.action == "mute") {
             soundProcessor.mute(exampleOperation);
-        } else if (exampleOperation.action == "mix") {
+        }
+        else if (exampleOperation.action == "mix") {
             soundProcessor.mix(exampleOperation);
         }
     }

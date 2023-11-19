@@ -3,12 +3,11 @@
 
 int main(void) {
 	Game game;
-	char key;
-	do {
-		key = _getch();
-		game.HandleInput(key);
+	char key = '\0';
+	while (true) {
 		game.Draw();
+		game.HandleInput(key);
 		Sleep(100);
-	} while (true);
+	}
 	return 0;
 }

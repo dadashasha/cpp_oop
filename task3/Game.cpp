@@ -1,72 +1,65 @@
 #include "Game.h"
 
+void Game::Update() {
+	{
+		maze[player.GetY()][player.GetX()] = ' ';
+		for (Enemy& enemy : enemies) {
+			enemy.MoveRandom(maze);
+		}
+	}
+}
+
 void Game::Draw() {
 	system("cls");
 
-	int i = 0;
-	while (i < width) {
-		std::cout << "#";
-		++i;
-	}
-	std::cout << std::endl;
-	for (i = 1; i < height; ++i) {
-		for (int j = 0; j < width; ++j) {
-			if (j == 0 || j == (width - 1)) {
-				std::cout << "#";
+	for (const auto& row : maze) {
+		for (const char& cell : row) {
+			if (cell == 'C') {
+				std::cout << "C" << " ";
 			}
-			else if (i == player.GetY() && j == player.GetX()) {
-				std::cout << "@";
+			else if (cell == 'g') {
+				std::cout << "g" << " ";
 			}
 			else {
-				std::cout << " ";
+				std::cout << cell << " ";
 			}
 		}
 		std::cout << std::endl;
 	}
-	i = 0;
-	while (i < width) {
-		std::cout << "#";
-		++i;
-	}
 }
 void Game::HandleInput(char key) {
-	int dx = 0;
-	int dy = 0;
-	if (key == 'a') {
-		dx = -1;
+	key = _getch();
+	while (true) {
+		std::lock_guard<std::mutex> lock(mazeMutex);
+		if (key == 'x') {
+			std::cout << "End of game!" << std::endl;
+			exit(0);
+		}
+		else if (key == 'w' || key == 's' || key == 'a' || key == 'd') {
+			Update();
+			player.Move(key, maze);
+			maze[player.GetY()][player.GetX()] = 'C';
+			break;
+		}
+		else {
+			key = _getch();
+		}
 	}
-	if (key == 'd') {
-		dx = 1;
-	}
-	if (key == 'w') {
-		dy = -1;
-	}
-	if (key == 's') {
-		dy = 1;
-	}
-	if (key == 'x') {
-		std::cout << "End of game!" << std::endl;
-		exit(0);
-	}
-	/*
-	switch (key) {
-	case 'a':
-		dx = -1;
-	case 'd':
-		dx = 1;
-	case 'w':
-		dy = -1;
-	case 's':
-		dy = 1;
-	case 'x':
-		exit(0);//выход из игры
-	}
-	*/
-	player.Move(dx, dy);
 }
-const int Game::GetWidth() {
-	return width;
-}
-const int Game::GetHeight() {
-	return height;
+
+void Game::UpdateLuke() {
+	while (true) {
+		std::this_thread::sleep_for(std::chrono::seconds(2));
+
+		std::lock_guard<std::mutex> lock(mazeMutex);
+		showLuke = !showLuke;
+		if (showLuke) {
+			maze[12][13] = '_';
+			maze[12][14] = '_';
+		}
+		else {
+			maze[12][13] = ' ';
+			maze[12][14] = ' ';
+		}
+	}
 }

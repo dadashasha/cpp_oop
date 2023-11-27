@@ -28,9 +28,8 @@ void Game::Draw() {
 	}
 }
 void Game::HandleInput(char key) {
-	key = _getch();
-	while (true) {
-		std::lock_guard<std::mutex> lock(mazeMutex);
+	while (_kbhit()) {
+		key = _getch();
 		if (key == 'x') {
 			std::cout << "End of game!" << std::endl;
 			exit(0);
@@ -39,10 +38,6 @@ void Game::HandleInput(char key) {
 			Update();
 			player.Move(key, maze);
 			maze[player.GetY()][player.GetX()] = 'C';
-			break;
-		}
-		else {
-			key = _getch();
 		}
 	}
 }

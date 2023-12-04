@@ -1,43 +1,33 @@
 #include "Enemy.h"
 
-void Enemy::MoveRandom(std::vector<std::vector<char>>& maze) {
-	int newX = x;
-	int newY = y;
+void Enemy::Move(std::vector<std::vector<char>>& maze) {
+    int dx = 0;
+    int dy = 0;
 
     switch (direction) {
     case 0:  //Вверх
-        --newY;
+        dy = -1;
         break;
     case 1:  //Вправо
-        ++newX;
+        dx = 1;
         break;
     case 2:  //Вниз
-        ++newY;
+        dy = 1;
         break;
     case 3:  //Влево
-        --newX;
+        dx = -1;
         break;
     }
 
-    if (newX >= 0 && newX < maze[0].size() &&
-        newY >= 0 && newY < maze.size() &&
-        maze[newY][newX] != '#') {
+    int newX = GetX() + dx;
+    int newY = GetY() + dy;
 
-        maze[y][x] = '.';
+    if (CanMove(newX, newY, maze)) {
         x = newX;
         y = newY;
-        maze[y][x] = 'g';
 
     }
     else {
         direction = std::rand() % 4;
     }
-}
-
-int Enemy::GetX() const{
-	return x;
-}
-
-int Enemy::GetY() const {
-	return y;
 }

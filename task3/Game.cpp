@@ -1,12 +1,48 @@
 #include "Game.h"
 
-void Game::Update() {
-	{
-		maze[player.GetY()][player.GetX()] = ' ';
-		for (Enemy& enemy : enemies) {
-			enemy.MoveRandom(maze);
+void Game::HandleInput() {
+	Update_Super();
+	Update_Enemy();
+	while (_kbhit()) {
+		char key = _getch();
+		if (key == 'x') {
+			std::cout << "End of game!" << std::endl;
+			exit(0);
+		}
+		else if (key == 'w' || key == 's' || key == 'a' || key == 'd') {
+			Update_Character();
+			player.Move(maze, key);
+			maze[player.GetY()][player.GetX()] = 'C';
 		}
 	}
+}
+
+void Game::Update_Super() {
+	super.Move(maze);
+}
+
+void Game::Update_Enemy() {
+	for (Enemy& enemy : enemies) {
+		maze[enemy.GetY()][enemy.GetX()] = '.';
+		enemy.Move(maze);
+		maze[enemy.GetY()][enemy.GetX()] = 'g';
+	}
+}
+
+void Game::Update_Character() {
+		maze[player.GetY()][player.GetX()] = ' ';
+		++score;
+		if (maze[player.GetY() - 1][player.GetX()] == 'O' ||
+			maze[player.GetY() + 1][player.GetX()] == 'O' ||
+			maze[player.GetY()][player.GetX() - 1] == 'O' ||
+			maze[player.GetY()][player.GetX() + 1] == 'O' ||
+			maze[player.GetY() - 1][player.GetX() - 1] == 'O' ||
+			maze[player.GetY() + 1][player.GetX() + 1] == 'O' ||
+			maze[player.GetY() - 1][player.GetX() + 1] == 'O' ||
+			maze[player.GetY() + 1][player.GetX() - 1] == 'O') {
+			score += 100;
+		}
+
 }
 
 void Game::Draw() {
@@ -20,41 +56,16 @@ void Game::Draw() {
 			else if (cell == 'g') {
 				std::cout << "g" << " ";
 			}
+			else if (cell == 'O') {
+				std::cout << "O" << " ";
+			}
 			else {
 				std::cout << cell << " ";
 			}
 		}
 		std::cout << std::endl;
 	}
-}
-void Game::HandleInput(char key) {
-	while (_kbhit()) {
-		key = _getch();
-		if (key == 'x') {
-			std::cout << "End of game!" << std::endl;
-			exit(0);
-		}
-		else if (key == 'w' || key == 's' || key == 'a' || key == 'd') {
-			Update();
-			player.Move(key, maze);
-			maze[player.GetY()][player.GetX()] = 'C';
-		}
-	}
-}
+	std::cout << "Scoring: " << score << std::endl;
+	std::cout << "To end the game press \"x\". " << std::endl;
 
-void Game::UpdateLuke() {
-	while (true) {
-		std::this_thread::sleep_for(std::chrono::seconds(2));
-
-		std::lock_guard<std::mutex> lock(mazeMutex);
-		showLuke = !showLuke;
-		if (showLuke) {
-			maze[12][13] = '_';
-			maze[12][14] = '_';
-		}
-		else {
-			maze[12][13] = ' ';
-			maze[12][14] = ' ';
-		}
-	}
 }

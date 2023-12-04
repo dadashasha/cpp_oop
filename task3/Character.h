@@ -1,17 +1,9 @@
 #pragma once
-#include <vector>
+#include "Entity.h"
 
-class Character{
-private:
-	int x;
-	int y;
+class Character : public Entity {
 public:
-	Character(int startX, int startY) : x(startX), y(startY) {}
+	Character(int startX, int startY) : Entity(startX, startY) {}
 
-
-	bool CanMove(int dx, int dy, const std::vector<std::vector<char>>& maze) const;
-	void Move(char key, const std::vector<std::vector<char>>& maze);
-
-	int GetX() const;
-	int GetY() const;
+	void Move(std::vector<std::vector<char>>& maze, char key);
 };

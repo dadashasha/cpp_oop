@@ -1,0 +1,128 @@
+#include <iostream>
+#include <fstream>
+#include <sstream>
+#include <vector>
+#include <tuple>
+
+template <typename... Types>
+class CsvParser {
+public:
+    CsvParser(std::ifstream& file, size_t skipLines = 0)
+        : file_(file), skipLines_(skipLines), currentLine_(0) {}
+
+    class Iterator {
+    public:
+        Iterator(std::ifstream& file, size_t skipLines)
+            : file_(file), skipLines_(skipLines) {
+            skipHeader();
+        }
+
+        bool operator!=(const Iterator& other) const {
+            return !file_.eof();
+        }
+
+        const std::tuple<Types...>& operator*() const {
+            return currentRow_;
+        }
+
+        Iterator& operator++() {
+            readNextRow();
+            return *this;
+        }
+
+    private:
+        std::ifstream& file_;
+        size_t skipLines_;
+        std::tuple<Types...> currentRow_;
+
+        void skipHeader() {
+            std::string line;
+            for (size_t i = 0; i < skipLines_; ++i) {
+                std::getline(file_, line);
+                std::stringstream ss(line);
+                readRow(ss, std::index_sequence_for<Types...>());
+            }
+            if (!file_.eof()) {
+                std::getline(file_, line);
+                std::stringstream ss(line);
+                readRow(ss, std::index_sequence_for<Types...>());
+            }
+        }
+
+        void readNextRow() {
+            std::string line;
+            if (std::getline(file_, line)) {
+                std::stringstream ss(line);
+                readRow(ss, std::index_sequence_for<Types...>());
+            }
+        }
+
+        template <size_t... Indices>
+        void readRow(std::istream& stream, std::index_sequence<Indices...>) {
+            (void)std::initializer_list<int>{((readCell(std::get<Indices>(currentRow_), stream)), 0)...};
+        }
+
+        template <typename T>
+        void readCell(T& cell, std::istream& stream) {
+            std::string cellStr;
+            if (std::getline(stream, cellStr, ',')) {
+                std::stringstream cellStream(cellStr);
+                cellStream >> cell;
+            }
+        }
+    };
+
+    Iterator begin() {
+        return Iterator(file_, skipLines_);
+    }
+
+    Iterator end() {
+        return Iterator(file_, 0);  // end iterator without skipping lines
+    }
+
+private:
+    std::ifstream& file_;
+    size_t skipLines_;
+    size_t currentLine_;
+};
+
+// Базовый случай: вывод одного элемента кортежа
+template <size_t Index, typename... Types>
+typename std::enable_if<Index == sizeof...(Types)>::type
+print_tuple(std::ostream&, const std::tuple<Types...>&) {}
+
+template <size_t Index, typename... Types>
+typename std::enable_if < Index < sizeof...(Types)>::type
+    print_tuple(std::ostream& os, const std::tuple<Types...>& t) {
+    if (Index != 0)
+        os << ", ";
+    os << std::get<Index>(t);
+    print_tuple<Index + 1>(os, t);
+}
+
+// Оператор вывода для std::tuple
+template <typename... Types>
+std::ostream& operator<<(std::ostream& os, const std::tuple<Types...>& t) {
+    os << "(";
+    print_tuple<0>(os, t);
+    os << ")";
+    return os;
+}
+
+int main() {
+    //std::tuple<int, std::string, double> t = { 5, "abcd", 3.14 };
+    //std::cout << t << std::endl; // Выводит (5, abcd, 3.14)
+
+    std::ifstream csv_stream("test.csv");
+    if (!csv_stream.is_open()) {
+        std::cerr << "Error: Unable to open the file 'test.csv'" << std::endl;
+        return 1;  //Возвращаем код ошибки
+    }
+    CsvParser<std::string, int, double> parser(csv_stream, 1 /*skip first line*/);
+
+    for (const std::tuple<std::string, int, double>& rs : parser) {
+        std::cout << rs << "\n";
+    }
+
+    return 0;
+}

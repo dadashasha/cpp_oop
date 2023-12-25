@@ -3,6 +3,14 @@
 #include <sstream>
 #include <vector>
 #include <tuple>
+#include <stdexcept>
+
+class CsvTypeMismatch : public std::runtime_error {
+public:
+    CsvTypeMismatch(const std::string& message)
+        : std::runtime_error(message) {}
+};
+
 
 template <typename... Types>
 class CsvParser {
@@ -69,10 +77,22 @@ public:
             std::string cellStr;
             if (std::getline(stream, cellStr, ',')) {
                 std::stringstream cellStream(cellStr);
-                cellStream >> cell;
+
+                T temp;
+                if (!(cellStream >> temp)) {
+                    throw CsvTypeMismatch("Error: Unexpected data type in CSV file.");
+                }
+                else {
+                    cell = temp;
+                }
             }
         }
+
+
+
     };
+
+
 
     CsvIterator begin() {
         return CsvIterator(file_, skipLines_);
@@ -108,7 +128,9 @@ std::ostream& operator<<(std::ostream& os, const std::tuple<Types...>& t) {
 }
 
 int main() {
-    std::ifstream csvFile("test.csv");
+    //std::ifstream csvFile("test.csv");
+    //std::ifstream csvFile("test1.csv");
+    std::ifstream csvFile("test2.csv");
 
     if (!csvFile.is_open()) {
         std::cerr << "Unable to open file" << std::endl;
@@ -116,8 +138,14 @@ int main() {
     }
     CsvParser<std::string, int, double> csvParser(csvFile, 1);
 
-    for (const std::tuple<std::string, int, double>& row : csvParser) {
-        std::cout << row << "\n";
+    try {
+        for (const std::tuple<std::string, int, double>& row : csvParser) {
+            std::cout << row << "\n";
+        }
+    }
+    catch (const CsvTypeMismatch& e) {
+        std::cerr << e.what() << std::endl;
+        return 1;
     }
 
     return 0;
